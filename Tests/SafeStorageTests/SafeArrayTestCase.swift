@@ -1,5 +1,5 @@
 import XCTest
-@testable import swift_safe_storage
+@testable import SafeStorage
 
 final class SafeArrayTestCase: XCTestCase {
     private var array: SafeArray<String>!

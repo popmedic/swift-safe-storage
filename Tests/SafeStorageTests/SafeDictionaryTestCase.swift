@@ -1,5 +1,5 @@
 import XCTest
-@testable import swift_safe_storage
+@testable import SafeStorage
 
 final class SafeDictionaryTestCase: XCTestCase {
     private var dict: SafeDictionary<String, String>!
