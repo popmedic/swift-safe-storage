@@ -16,16 +16,23 @@ public final class SafeArray<Value> {
     /// safely add a value to the storage
     /// - parameters:
     ///     - value: value to add to storage
-    public func add(_ value: Value) {
-        insert(value, at: self.storage.endIndex)
+    public func append(_ value: Value) {
+        access.async(flags: [.barrier]) {
+            self.storage.append(value)
+        }
     }
     
     /// safely insert a value at an index to the storage
     /// - parameters:
     ///     - value: value to add to storage
-    ///     - at: index
+    ///     - at: index, if index is greater then the current count,
+    ///     will append instead
     public func insert(_ value: Value, at: Int) {
         access.async(flags: [.barrier]) {
+            guard at < self.storage.count else {
+                self.storage.append(value)
+                return
+            }
             self.storage.insert(value, at: at)
         }
     }
@@ -33,20 +40,24 @@ public final class SafeArray<Value> {
     /// safely insert a value removing the previous value
     /// - parameters:
     ///     - value: value to add, removing previous
-    public func upsert(_ value: Value, isEqual: Equaling) {
-        if let index = remove(value, isEqual: isEqual) {
-            insert(value, at: index)
-        } else {
-            add(value)
+    public func upsert(_ value: Value, isEqual: @escaping Equaling) {
+        access.async(flags: [.barrier]) {
+            if let index = self.storage.firstIndex(where: { isEqual($0, value) }){
+                self.storage.remove(at: index)
+                self.storage.insert(value, at: index)
+            } else {
+                self.storage.append(value)
+            }
         }
     }
     
-    /// safely remove an item from the storage
+    /// remove an item from the storage
+    /// - note: **NOT THREAD SAFE for safety use remove by value**
     /// - parameters:
-    ///     - at: indexof item to remove
+    ///     - at: index of item to remove
     public func remove(_ at: Int) {
-        guard at < count else { return }
         access.async(flags: [.barrier]) {
+            guard at < self.storage.count else { return }
             self.storage.remove(at: at)
         }
     }
@@ -57,18 +68,23 @@ public final class SafeArray<Value> {
     ///     - isEqual: function to call to check if value is equal to
     ///                 value in storage
     /// - returns: the index that value was at
-    public func remove(_ value: Value, isEqual: Equaling) -> Int? {
-        guard let index = find(value, isEqual: isEqual) else { return nil }
-        remove(index)
-        return index
+    public func remove(_ value: Value, isEqual: @escaping Equaling) {
+        access.async(flags: [.barrier]) {
+            guard let index = self.storage.firstIndex(where: { isEqual($0, value) }) else { return }
+            self.storage.remove(at: index)
+        }
     }
     
-    /// safely get an item from the storage
+    /// get the item at index from the storage
+    /// - note: **NOT THREAD SAFE, for thread safety use find**
     /// - parameters:
     ///     - at: the index of the value to get
     /// - returns: value at the index, or nil if the value does not exist
     public func get(_ at: Int) -> Value? {
-        access.sync { storage[at] }
+        return access.sync {
+            guard at < storage.count else { return nil }
+            return storage[at]
+        }
     }
     
     /// safely find the index of the value
