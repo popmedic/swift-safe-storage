@@ -1,7 +1,7 @@
 import Foundation
 
 /// Thread safe dictionary for storage
-class SafeDictionary<Key: Hashable, Value> {
+public final class SafeDictionary<Key: Hashable, Value> {
     private let access = DispatchQueue(label: "\(SafeDictionary.self).access",
                                        qos: .utility,
                                        attributes: [.concurrent])
@@ -11,7 +11,7 @@ class SafeDictionary<Key: Hashable, Value> {
     /// - parameters:
     ///     - key: key to set
     ///     - value: value to set key to
-    func set(_ key: Key, to value: Value?) {
+    public func set(_ key: Key, to value: Value?) {
         // remove the key if no value
         guard let value = value else {
             remove(key)
@@ -26,7 +26,7 @@ class SafeDictionary<Key: Hashable, Value> {
     /// Safely remove the key/value from the storage
     /// - parameters:
     ///     - key: key to remove key/value
-    func remove(_ key: Key) {
+    public func remove(_ key: Key) {
         // safely remove the key and value from the storage
         access.async(flags: [.barrier]) { self.storage.removeValue(forKey: key) }
     }
@@ -35,12 +35,12 @@ class SafeDictionary<Key: Hashable, Value> {
     /// - parameters:
     ///     - key: key to get value of
     /// - returns: value in key of storage or nil if can not find key
-    func get(at key: Key) -> Value? {
+    public func get(at key: Key) -> Value? {
         access.sync { storage[key] }
     }
     
     /// Safely get /set the value for key
-    subscript(key: Key) -> Value? {
+    public subscript(key: Key) -> Value? {
         get { get(at: key) }
         set { set(key, to: newValue)}
     }
