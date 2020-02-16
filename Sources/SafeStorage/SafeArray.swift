@@ -7,6 +7,9 @@ public final class SafeArray<Value: Equatable> {
                                        attributes: [.concurrent])
     private var storage = [Value]()
     
+    /// create a new SafeArray
+    public init() {}
+    
     /// safely add a value to the storage
     /// - parameters:
     ///     - value: value to add to storage
@@ -69,7 +72,6 @@ public final class SafeArray<Value: Equatable> {
     /// - returns: index of the value, or nil if the value does not exist
     public func find(_ value: Value) -> Int? {
         access.sync { storage.firstIndex(where: { $0 == value }) }
-
     }
     
     /// safely get the size of the array

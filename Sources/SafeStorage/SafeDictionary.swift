@@ -6,7 +6,10 @@ public final class SafeDictionary<Key: Hashable, Value> {
                                        qos: .utility,
                                        attributes: [.concurrent])
     private var storage = [Key: Value]()
-
+    
+    /// create a new SafeDictionary
+    public init() {}
+    
     /// Safely set a key to value.  If value is nil removes the key/value
     /// - parameters:
     ///     - key: key to set
