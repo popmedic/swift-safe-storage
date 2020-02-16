@@ -15,7 +15,7 @@ final class SafeArrayTestCase: XCTestCase {
     }
     
     func testRemoveValueNotExist() {
-        XCTAssertNil(array.remove("Value"))
+        XCTAssertNil(array.remove("Value") { $0 == $1 })
     }
     
     func testRemoveOutOfIndex() {
@@ -26,18 +26,18 @@ final class SafeArrayTestCase: XCTestCase {
 
     func testRemoveValue() {
         testAdd()
-        XCTAssertEqual(array.remove("Value"), 0)
+        XCTAssertEqual(array.remove("Value") { $0 == $1 }, 0)
     }
     
     func testUpsertValueExist() {
         testAdd()
-        array.upsert("Value")
+        array.upsert("Value") { $0 == $1 }
         XCTAssertEqual(array.count, 1)
     }
     
     func testUpsertValueNotExist() {
         testAdd()
-        array.upsert("Value2")
+        array.upsert("Value2") { $0 == $1 }
         XCTAssertEqual(array.count, 2)
     }
     

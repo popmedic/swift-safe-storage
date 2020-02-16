@@ -1,11 +1,14 @@
 import Foundation
 
 /// Thread safe array for storage
-public final class SafeArray<Value: Equatable> {
+public final class SafeArray<Value> {
     private let access = DispatchQueue(label: "\(SafeArray.self).access",
                                        qos: .utility,
                                        attributes: [.concurrent])
     private var storage = [Value]()
+    
+    /// function type for checking if values are equal
+    public typealias Equaling = (_ rhs: Value, _ lhs: Value) -> Bool
     
     /// create a new SafeArray
     public init() {}
@@ -30,8 +33,8 @@ public final class SafeArray<Value: Equatable> {
     /// safely insert a value removing the previous value
     /// - parameters:
     ///     - value: value to add, removing previous
-    public func upsert(_ value: Value) {
-        if let index = remove(value) {
+    public func upsert(_ value: Value, isEqual: Equaling) {
+        if let index = remove(value, isEqual: isEqual) {
             insert(value, at: index)
         } else {
             add(value)
@@ -51,9 +54,11 @@ public final class SafeArray<Value: Equatable> {
     /// safely remove an item from the storage
     /// - parameters:
     ///     - value: value of item to remove
+    ///     - isEqual: function to call to check if value is equal to
+    ///                 value in storage
     /// - returns: the index that value was at
-    public func remove(_ value: Value) -> Int? {
-        guard let index = find(value) else { return nil }
+    public func remove(_ value: Value, isEqual: Equaling) -> Int? {
+        guard let index = find(value, isEqual: isEqual) else { return nil }
         remove(index)
         return index
     }
@@ -69,9 +74,11 @@ public final class SafeArray<Value: Equatable> {
     /// safely find the index of the value
     /// - parameters:
     ///     - value: value to find the index of
+    ///     - isEqual: function to call to check if value is equal to
+    ///                 value in storage
     /// - returns: index of the value, or nil if the value does not exist
-    public func find(_ value: Value) -> Int? {
-        access.sync { storage.firstIndex(where: { $0 == value }) }
+    public func find(_ value: Value, isEqual: Equaling) -> Int? {
+        access.sync { storage.firstIndex(where: { isEqual($0, value) }) }
     }
     
     /// safely get the size of the array
